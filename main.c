@@ -666,7 +666,7 @@ int main(void)
     ads1298_write_command(ADS129X_CMD_START);
     ads1298_write_command(ADS129X_CMD_RDATAC);
 		
-		//mpu_ppi_chn_config();
+		mpu_ppi_chn_config();
 		ads1298_ppi_recv_start();
 
 //    // Enter main loop.
@@ -676,13 +676,13 @@ int main(void)
     {
 				if (get_data_eight_chn(sendbuf + (11 * offset)))
         {
-						//get_data_three_chn(sendbuf + (11 * offset) + 8);
-					accel_values_t acc;
-					app_mpu_read_accel(&acc);
-					NRF_LOG_INFO("%d,%d,%d",acc.x,acc.y,acc.z);
-					(sendbuf + (11 * offset) + 8)[0] = acc.x;
-					(sendbuf + (11 * offset) + 8)[1] = acc.y;
-					(sendbuf + (11 * offset) + 8)[2] = acc.z;
+						get_data_three_chn(sendbuf + (11 * offset) + 8);
+//					accel_values_t acc;
+//					app_mpu_read_accel(&acc);
+//					NRF_LOG_INFO("%d,%d,%d",acc.x,acc.y,acc.z);
+//					(sendbuf + (11 * offset) + 8)[0] = acc.x;
+//					(sendbuf + (11 * offset) + 8)[1] = acc.y;
+//					(sendbuf + (11 * offset) + 8)[2] = acc.z;
 						offset++;
 						if(offset == 11){
 							

@@ -36,8 +36,17 @@ void twi_handler(nrf_drv_twi_evt_t const * p_event, void * p_context)
             break;
     }
 		
-    NRF_SPIM0->TXD.PTR = (uint32_t)&twi_tx_buffer;
-    NRF_TWIM0->RXD.PTR = (uint32_t)&twi_rx_buffer;
+		twi_tx_buffer[0] = MPU_REG_ACCEL_XOUT_H;
+	
+		nrf_drv_twi_xfer_desc_t xfer_desc;
+		xfer_desc.address = MPU_ADDRESS;
+		xfer_desc.primary_length = 1;
+		xfer_desc.p_primary_buf = twi_tx_buffer;
+		xfer_desc.p_secondary_buf = twi_rx_buffer;
+		xfer_desc.secondary_length = 6;
+		xfer_desc.type = NRF_DRV_TWI_XFER_TXRX;
+		
+		nrf_drv_twi_xfer(&m_twi, &xfer_desc, NRF_DRV_TWI_FLAG_HOLD_XFER);
 		
 		int16_t channel_data;
 		
@@ -209,14 +218,24 @@ void mpu_ppi_chn_config(void)
 {
 		ret_code_t ret;
 		
-		twi_tx_buffer[0] = MPU_REG_ACCEL_XOUT_H;
+   		twi_tx_buffer[0] = MPU_REG_ACCEL_XOUT_H;
+//		
+//		NRF_TWIM0->TXD.MAXCNT = 1;
+//    NRF_TWIM0->RXD.MAXCNT = 6;
+//    NRF_TWIM0->TXD.LIST =	1;
+//    NRF_SPIM0->TXD.PTR = (uint32_t)&twi_tx_buffer;
+//    NRF_TWIM0->RXD.LIST =	1;
+//    NRF_TWIM0->RXD.PTR = (uint32_t)&twi_rx_buffer;
+	
+		nrf_drv_twi_xfer_desc_t xfer_desc;
+		xfer_desc.address = MPU_ADDRESS;
+		xfer_desc.primary_length = 1;
+		xfer_desc.p_primary_buf = twi_tx_buffer;
+		xfer_desc.p_secondary_buf = twi_rx_buffer;
+		xfer_desc.secondary_length = 6;
+		xfer_desc.type = NRF_DRV_TWI_XFER_TXRX;
 		
-		NRF_TWIM0->TXD.MAXCNT = 1;
-    NRF_TWIM0->RXD.MAXCNT = 6;
-    NRF_TWIM0->TXD.LIST =	1;
-    NRF_SPIM0->TXD.PTR = (uint32_t)&twi_tx_buffer;
-    NRF_TWIM0->RXD.LIST =	1;
-    NRF_TWIM0->RXD.PTR = (uint32_t)&twi_rx_buffer;
+		nrf_drv_twi_xfer(&m_twi, &xfer_desc, NRF_DRV_TWI_FLAG_HOLD_XFER);
 	
 		ret = nrf_drv_ppi_channel_fork_assign(spi_end_transfer_channel, nrf_drv_twi_start_task_get(&m_twi, NRF_DRV_TWI_XFER_TXRX));
 		APP_ERROR_CHECK(ret);
