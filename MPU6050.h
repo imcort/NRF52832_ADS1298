@@ -167,5 +167,7 @@ uint32_t app_mpu_init(void);
 uint32_t app_mpu_config(app_mpu_config_t * config);
 uint32_t app_mpu_accel_only_mode(void);
 uint32_t app_mpu_read_accel(accel_values_t * accel_values);
+void mpu_ppi_chn_config(void);
+void get_data_three_chn(int16_t* data);
 
 #endif

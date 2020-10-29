@@ -1,17 +1,29 @@
 #include "mpu6050.h"
 #include "nrf_drv_twi.h"
 
+#include "nrf_drv_ppi.h"
+#include "nrf_queue.h"
+
+#include "nrf_log.h"
+
 #define MPU_TWI_TIMEOUT 					10000 
 #define MPU_TWI_BUFFER_SIZE     	14
 #define MPU_ADDRESS     					0x68
+
+#define QUEUE_SIZE 1200
 
 #define TWI_INSTANCE_ID     1
 static volatile bool m_xfer_done = false;
 static const nrf_drv_twi_t m_twi = NRF_DRV_TWI_INSTANCE(TWI_INSTANCE_ID);
 
 uint8_t twi_tx_buffer[MPU_TWI_BUFFER_SIZE];
+uint8_t twi_rx_buffer[6];
 
+extern nrf_ppi_channel_t spi_end_transfer_channel;
 
+NRF_QUEUE_DEF(int16_t, m_accx_queue, QUEUE_SIZE, NRF_QUEUE_MODE_OVERFLOW);
+NRF_QUEUE_DEF(int16_t, m_accy_queue, QUEUE_SIZE, NRF_QUEUE_MODE_OVERFLOW);
+NRF_QUEUE_DEF(int16_t, m_accz_queue, QUEUE_SIZE, NRF_QUEUE_MODE_OVERFLOW);
 
 void twi_handler(nrf_drv_twi_evt_t const * p_event, void * p_context)
 {
@@ -23,6 +35,21 @@ void twi_handler(nrf_drv_twi_evt_t const * p_event, void * p_context)
         default:
             break;
     }
+		
+    NRF_SPIM0->TXD.PTR = (uint32_t)&twi_tx_buffer;
+    NRF_TWIM0->RXD.PTR = (uint32_t)&twi_rx_buffer;
+		
+		int16_t channel_data;
+		
+		channel_data = (twi_rx_buffer[0] << 8) | twi_rx_buffer[1];
+    nrf_queue_push(&m_accx_queue, &channel_data);
+		//NRF_LOG_INFO("%d",channel_data);
+
+    channel_data = (twi_rx_buffer[2] << 8) | twi_rx_buffer[3];
+    nrf_queue_push(&m_accy_queue, &channel_data);
+
+    channel_data = (twi_rx_buffer[4] << 8) | twi_rx_buffer[5];
+    nrf_queue_push(&m_accz_queue, &channel_data);
 }
 
 void twi_init (void)
@@ -176,4 +203,39 @@ uint32_t app_mpu_config(app_mpu_config_t * config)
     uint8_t *data;
     data = (uint8_t*)config;
     return nrf_drv_mpu_write_registers(MPU_REG_SMPLRT_DIV, data, 4);
+}
+
+void mpu_ppi_chn_config(void)
+{
+		ret_code_t ret;
+		
+		twi_tx_buffer[0] = MPU_REG_ACCEL_XOUT_H;
+		
+		NRF_TWIM0->TXD.MAXCNT = 1;
+    NRF_TWIM0->RXD.MAXCNT = 6;
+    NRF_TWIM0->TXD.LIST =	1;
+    NRF_SPIM0->TXD.PTR = (uint32_t)&twi_tx_buffer;
+    NRF_TWIM0->RXD.LIST =	1;
+    NRF_TWIM0->RXD.PTR = (uint32_t)&twi_rx_buffer;
+	
+		ret = nrf_drv_ppi_channel_fork_assign(spi_end_transfer_channel, nrf_drv_twi_start_task_get(&m_twi, NRF_DRV_TWI_XFER_TXRX));
+		APP_ERROR_CHECK(ret);
+
+}
+
+void get_data_three_chn(int16_t* data)
+{
+	ret_code_t ret;
+	
+	int16_t val = 0;
+	
+	nrf_queue_pop(&m_accx_queue, &val);
+	data[0] = val;
+	
+	nrf_queue_pop(&m_accy_queue, &val);
+	data[1] = val;
+	
+	nrf_queue_pop(&m_accz_queue, &val);
+	data[2] = val;
+	
 }

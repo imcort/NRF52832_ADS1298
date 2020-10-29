@@ -607,7 +607,7 @@ int main(void)
     NRF_LOG_INFO("Acc Init.");
 	
 		app_mpu_init();
-		app_mpu_accel_only_mode();
+		//app_mpu_accel_only_mode();
 	
 		app_mpu_config_t p_mpu_config = {                                                     \
         .smplrt_div                     = 0,              \
@@ -618,7 +618,7 @@ int main(void)
         .gyro_config.gz_st              = 0,              \
         .gyro_config.gy_st              = 0,              \
         .gyro_config.gx_st              = 0,              \
-        .accel_config.afs_sel           = AFS_16G,        \
+        .accel_config.afs_sel           = AFS_4G,        \
         .accel_config.za_st             = 0,              \
         .accel_config.ya_st             = 0,              \
         .accel_config.xa_st             = 0,              \
@@ -645,20 +645,20 @@ int main(void)
 		uint8_t regid = ads1298_read_register(ADS129X_REG_ID);
 		NRF_LOG_INFO("ADS1298_ID %x", regid);
 	
-		ads1298_write_register(ADS129X_REG_CONFIG1, ADS129X_SAMPLERATE_LP_1K);
+		ads1298_write_register(ADS129X_REG_CONFIG1, ADS129X_SAMPLERATE_LP_250);
     ads1298_write_register(ADS129X_REG_CONFIG3, 0xDE);
 
     ads1298_write_register(ADS129X_REG_RLD_SENSP, (1 << ADS129X_BIT_CH2) | (1 << ADS129X_BIT_CH3));
     ads1298_write_register(ADS129X_REG_RLD_SENSN, (1 << ADS129X_BIT_CH2) | (1 << ADS129X_BIT_CH3));
 
-    ads1298_write_register(ADS129X_REG_CH1SET, 0x00);
-    ads1298_write_register(ADS129X_REG_CH2SET, 0x00);
-    ads1298_write_register(ADS129X_REG_CH3SET, 0x00);
-    ads1298_write_register(ADS129X_REG_CH4SET, 0x00);
-    ads1298_write_register(ADS129X_REG_CH5SET, 0x00);
-    ads1298_write_register(ADS129X_REG_CH6SET, 0x00);
-    ads1298_write_register(ADS129X_REG_CH7SET, 0x00);
-    ads1298_write_register(ADS129X_REG_CH8SET, 0x00);
+    ads1298_write_register(ADS129X_REG_CH1SET, 0x40);
+    ads1298_write_register(ADS129X_REG_CH2SET, 0x40);
+    ads1298_write_register(ADS129X_REG_CH3SET, 0x40);
+    ads1298_write_register(ADS129X_REG_CH4SET, 0x40);
+    ads1298_write_register(ADS129X_REG_CH5SET, 0x40);
+    ads1298_write_register(ADS129X_REG_CH6SET, 0x40);
+    ads1298_write_register(ADS129X_REG_CH7SET, 0x40);
+    ads1298_write_register(ADS129X_REG_CH8SET, 0x40);
 
     ads1298_write_register(ADS129X_REG_WCT1, 0x0A);
     ads1298_write_register(ADS129X_REG_WCT2, 0xDC);
@@ -666,19 +666,27 @@ int main(void)
     ads1298_write_command(ADS129X_CMD_START);
     ads1298_write_command(ADS129X_CMD_RDATAC);
 		
+		//mpu_ppi_chn_config();
 		ads1298_ppi_recv_start();
 
 //    // Enter main loop.
-		static int16_t sendbuf[120];
+		static int16_t sendbuf[121];
 		static int offset = 0;
     for (;;)
     {
-				if (get_data_eight_chn(sendbuf + (8 * offset)))
+				if (get_data_eight_chn(sendbuf + (11 * offset)))
         {
+						//get_data_three_chn(sendbuf + (11 * offset) + 8);
+					accel_values_t acc;
+					app_mpu_read_accel(&acc);
+					NRF_LOG_INFO("%d,%d,%d",acc.x,acc.y,acc.z);
+					(sendbuf + (11 * offset) + 8)[0] = acc.x;
+					(sendbuf + (11 * offset) + 8)[1] = acc.y;
+					(sendbuf + (11 * offset) + 8)[2] = acc.z;
 						offset++;
-						if(offset == 15){
+						if(offset == 11){
 							
-							uint16_t llength = 240;
+							uint16_t llength = 242;
 							ble_nus_data_send(&m_nus, (uint8_t *)sendbuf, &llength, m_conn_handle);
 							offset = 0;
 						
