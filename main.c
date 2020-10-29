@@ -76,6 +76,8 @@
 #include "nrf_delay.h"
 #include "nrf_drv_clock.h"
 
+#include "mpu6050.h"
+
 #define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
 
 #define DEVICE_NAME                     "EMG"                               /**< Name of device. Will be included in the advertising data. */
@@ -590,7 +592,7 @@ int main(void)
     // Initialize.
     log_init();
     timers_init();
-    buttons_leds_init(&erase_bonds);
+    //buttons_leds_init(&erase_bonds);
     power_management_init();
     ble_stack_init();
     gap_params_init();
@@ -602,7 +604,33 @@ int main(void)
     advertising_start();
 	
 	 // Start execution.
-    NRF_LOG_INFO("Debug logging for UART over RTT started.");
+    NRF_LOG_INFO("Acc Init.");
+	
+		app_mpu_init();
+		app_mpu_accel_only_mode();
+	
+		app_mpu_config_t p_mpu_config = {                                                     \
+        .smplrt_div                     = 0,              \
+        .sync_dlpf_gonfig.dlpf_cfg      = 1,              \
+        .sync_dlpf_gonfig.ext_sync_set  = 0,              \
+        .gyro_config.fs_sel             = GFS_2000DPS,    \
+        .gyro_config.f_choice           = 0,              \
+        .gyro_config.gz_st              = 0,              \
+        .gyro_config.gy_st              = 0,              \
+        .gyro_config.gx_st              = 0,              \
+        .accel_config.afs_sel           = AFS_16G,        \
+        .accel_config.za_st             = 0,              \
+        .accel_config.ya_st             = 0,              \
+        .accel_config.xa_st             = 0,              \
+    };
+	
+		app_mpu_config(&p_mpu_config);
+		
+//		accel_values_t acc;
+//		app_mpu_read_accel(&acc);
+//		NRF_LOG_INFO("%d,",acc.x);
+		
+		NRF_LOG_INFO("ECG Init.");
 	
 		ads1298_spi_init();
 	
@@ -640,7 +668,7 @@ int main(void)
 		
 		ads1298_ppi_recv_start();
 
-    // Enter main loop.
+//    // Enter main loop.
 		static int16_t sendbuf[120];
 		static int offset = 0;
     for (;;)

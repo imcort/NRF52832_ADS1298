@@ -49,8 +49,24 @@ typedef struct
     accel_config_t      accel_config;       // Accelerometer configuration structure
 }app_mpu_config_t;
 
-#define TWI_SCL_M           22         //I2C SCL引脚
-#define TWI_SDA_M           23         //I2C SDA引脚
+/**@brief Enum defining Accelerometer's Full Scale range posibillities in Gs. */
+enum accel_range {
+  AFS_2G = 0,       // 2 G
+  AFS_4G,           // 4 G
+  AFS_8G,           // 8 G
+  AFS_16G           // 16 G
+};
+
+/**@brief Enum defining Gyroscopes� Full Scale range posibillities in Degrees Pr Second. */
+enum gyro_range {
+  GFS_250DPS = 0,   // 250 deg/s
+  GFS_500DPS,       // 500 deg/s
+  GFS_1000DPS,      // 1000 deg/s
+  GFS_2000DPS       // 2000 deg/s
+};
+
+#define TWI_SCL_M           29         //I2C SCL引脚
+#define TWI_SDA_M           30         //I2C SDA引脚
 
 #define MPU6050_ADDRESS_LEN  1         //MPU6050地址长度
 #define MPU6050_ADDRESS     (0xD0>>1)  //MPU6050地址
@@ -146,5 +162,10 @@ typedef struct
 #define MPU_REG_FIFO_COUNTL        0x73 // Dec 115, R/W,  FIFO_COUNT[7:0]
 #define MPU_REG_FIFO_R_W           0x74 // Dec 116, R/W,  FIFO_DATA[7:0]
 #define MPU_REG_WHO_AM_I           0x75 // Dec 117, R,    - WHO_AM_I[6:1] -
+
+uint32_t app_mpu_init(void);
+uint32_t app_mpu_config(app_mpu_config_t * config);
+uint32_t app_mpu_accel_only_mode(void);
+uint32_t app_mpu_read_accel(accel_values_t * accel_values);
 
 #endif

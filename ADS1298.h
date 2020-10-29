@@ -5,10 +5,10 @@
 #include <stdbool.h>
 
 #define ADS1298_DRDY_PIN		15
-#define ADS1298_SCK_PIN			6
-#define ADS1298_MISO_PIN		8
-#define ADS1298_MOSI_PIN		1
-#define ADS1298_SS_PIN			0
+#define ADS1298_SCK_PIN			8
+#define ADS1298_MISO_PIN		18
+#define ADS1298_MOSI_PIN		5
+#define ADS1298_SS_PIN			6
 
 // SPI Command Definition Byte Assignments (Datasheet, pg. 35)
 #define ADS129X_CMD_WAKEUP  0x02 // Wake-up from standby mode
